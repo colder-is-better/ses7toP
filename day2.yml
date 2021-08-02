@@ -1,0 +1,208 @@
+---
+
+- hosts: admin
+
+  become: true
+
+  gather_facts: false
+
+  vars_files:
+    - services.yml
+
+  tasks:
+
+    - name: 'Get number of running Monitors known to the orchestrator'
+      shell: |
+        set -o pipefail
+        ceph orch ps daemon_type=mon | grep 'running' | wc -l
+      register: how_many_mons
+      failed_when: false
+      changed_when: false
+
+    - name: 'Result'
+      debug:
+        msg: '{{ how_many_mons.stdout }}'
+
+    - block:
+
+        - name: 'Deploy additional Monitors'
+          shell: ceph orch apply mon placement={{ max_mons }}
+          changed_when: true
+
+        - name: 'Wait for all Monitors to be ready'
+          shell: |
+            set -o pipefail
+            ceph orch ps daemon_type=mon | grep 'running' | wc -l
+          register: mons_ready
+          failed_when: false
+          until: mons_ready.stdout == max_mons
+          retries: 360
+          delay: 5
+          changed_when: false
+
+      when: how_many_mons.stdout != max_mons
+
+    - name: 'Get number of running Managers known to the orchestrator'
+      shell: |
+        set -o pipefail
+        ceph orch ps daemon_type=mgr | grep 'running' | wc -l
+      register: how_many_mgrs
+      failed_when: false
+      changed_when: false
+
+    - name: 'Result'
+      debug:
+        msg: '{{ how_many_mgrs.stdout }}'
+
+    - block:
+
+        - name: 'Deploy additional Managers'
+          shell: ceph orch apply mgr placement={{ max_mgrs }}
+          changed_when: true
+
+        - name: 'Wait for all Managers to be ready'
+          shell: |
+            set -o pipefail
+            ceph orch ps daemon_type=mgr | grep 'running' | wc -l
+          register: mgrs_ready
+          failed_when: false
+          until: mgrs_ready.stdout == max_mgrs
+          retries: 360
+          delay: 5
+          changed_when: false
+
+      when: how_many_mgrs.stdout != max_mgrs
+
+    - name: 'Get number of available OSD disks'
+      shell: |
+        set -o pipefail
+        ceph orch device ls | grep '..Yes' | wc -l
+      register: osd_disks_avail
+      failed_when: false
+      changed_when: false
+
+    - name: 'Result'
+      debug:
+        msg: '{{ osd_disks_avail.stdout }}'
+
+    - block:
+
+        - name: 'Provision all available OSD disks'
+          shell: ceph orch apply osd --all-available-devices
+          changed_when: true
+
+        - name: 'Wait for all available OSD disks to be provisioned'
+          shell: |
+            set -o pipefail
+            ceph orch device ls | grep '..Yes' | wc -l
+          register: osds_in_queue
+          failed_when: false
+          until: osds_in_queue.stdout == '0'
+          retries: 360
+          delay: 5
+          changed_when: false
+
+      when: osd_disks_avail.stdout != '0'
+
+    - name: 'Get number of running NFS Ganesha servers known to the orchestrator'
+      shell: |
+        set -o pipefail
+        ceph orch ps daemon_type=nfs | grep 'running' | wc -l
+      register: how_many_nfss
+      failed_when: false
+      changed_when: false
+
+    - name: 'Result'
+      debug:
+        msg: '{{ how_many_nfss.stdout }}'
+
+    - block:
+
+        - name: 'Deploy NFS Ganesha servers'
+          shell: |
+            ceph osd pool create my_nfs_pool
+            ceph osd pool application enable my_nfs_pool rbd
+            ceph orch apply nfs svc_id=mynfs placement={{ max_nfss }} pool=my_nfs_pool
+          changed_when: true
+
+        - name: 'Wait for all NFS Ganesha servers to be ready'
+          shell: |
+            set -o pipefail
+            ceph orch ps daemon_type=nfs | grep 'running' | wc -l
+          register: nfss_ready
+          failed_when: false
+          until: nfss_ready.stdout == max_nfss
+          retries: 360
+          delay: 5
+          changed_when: false
+
+      when: how_many_nfss.stdout != max_nfss
+
+    - name: 'Get number of running Metadata servers known to the orchestrator'
+      shell: |
+        set -o pipefail
+        ceph orch ps daemon_type=mds | grep 'running' | wc -l
+      register: how_many_mdss
+      failed_when: false
+      changed_when: false
+
+    - name: 'Result'
+      debug:
+        msg: '{{ how_many_mdss.stdout }}'
+
+    - block:
+
+        - name: 'Deploy Metadata servers'
+          shell: ceph fs volume create mycephfs {{ max_mdss }}
+          changed_when: true
+
+        - name: 'Wait for all Metadata servers to be ready'
+          shell: ceph orch ps daemon_type=mds | grep 'running' | wc -l
+          register: mdss_ready
+          failed_when: false
+          until: mdss_ready.stdout == max_mdss
+          retries: 360
+          delay: 5
+          changed_when: false
+
+      when: how_many_mdss.stdout != max_mdss
+
+    - name: 'Get number of running RADOS gateways known to the orchestrator'
+      shell: |
+        set -o pipefail
+        ceph orch ps daemon_type=rgw | grep 'running' | wc -l
+      register: how_many_rgws
+      failed_when: false
+      changed_when: false
+
+    - name: 'Result'
+      debug:
+        msg: '{{ how_many_rgws.stdout }}'
+
+    - block:
+
+        - name: 'Deploy RADOS gateways'
+          shell: ceph orch apply rgw realm_name=myrealm zone_name=myzone placement={{ max_rgws }}
+          changed_when: true
+
+        - name: 'Wait for all RADOS gateways to be ready'
+          shell: |
+            set -o pipefail
+            ceph orch ps daemon_type=rgw | grep 'running' | wc -l
+          register: rgws_ready
+          failed_when: false
+          until: rgws_ready.stdout == max_rgws
+          retries: 360
+          delay: 5
+          changed_when: false
+
+      when: how_many_rgws.stdout != max_rgws
+
+    - name: 'Get status of the cluster'
+      shell: ceph status
+      register: ceph_status
+      changed_when: false
+
+    - name: "'ceph status' output"
+      debug:
+        msg: '{{ ceph_status.stdout }}'

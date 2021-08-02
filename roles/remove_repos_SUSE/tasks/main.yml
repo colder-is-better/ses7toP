@@ -1,0 +1,8 @@
+---
+
+- name: 'Remove repositories of OS / Modules / Products'
+  zypper_repository:
+    name: '{{ item.name }}'
+    repo: '{{ item.url }}'
+    state: absent
+  with_items: '{{ repos }}'

@@ -1,0 +1,77 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+ENV['VAGRANT_DEFAULT_PROVIDER'] = 'libvirt'
+
+require "yaml"
+
+params = YAML.load_file "setup.yml"
+
+the_box = params["the_box"]
+
+node_count = params["node_count"]
+
+ram_size = params["ram_size"]
+core_count = params["core_count"]
+
+osd_count = params["osd_count"]
+osd_cap = params["osd_cap"]
+
+public_net_domain = params["public_net_domain"]
+public_net_prefix = params["public_net_prefix"]
+cluster_net_prefix = params["cluster_net_prefix"]
+
+first_node_addr = params["first_node_addr"]
+
+Vagrant.configure(2) do |conf|
+
+  # ===== General Vagrant VM configuration
+
+  conf.vm.box = "#{the_box}"
+  conf.vm.box_check_update = false
+  conf.vm.synced_folder "./", "/vagrant", disabled: true
+  conf.vm.provider :libvirt do |t|
+    t.cpus = core_count
+    t.memory = ram_size
+    t.video_vram = 2048
+  end
+  conf.ssh.insert_key = false
+
+  # ===== ===== Admin and Cluster nodes (with one or more OSD disks each)
+
+  (0..node_count-1).each do |m|
+    conf.vm.define :"node#{m}" do |n|
+      n.vm.hostname = "node#{m}.#{public_net_domain}"
+      n.vm.network :private_network,
+        :ip => "#{public_net_prefix}.#{first_node_addr+m}"
+      n.vm.network :private_network,
+        :ip => "#{cluster_net_prefix}.#{first_node_addr+m}"
+      if m > 0
+        (0..osd_count-1).each do |i|
+	  n.vm.provider :libvirt do |t|
+	    t.storage :file,
+	      :path => "node#{m}-osd#{i}.qcow2",
+	      :size => "#{osd_cap}M",
+	      :type => "qcow2"
+	  end
+        end
+      end
+    end
+
+    if m == node_count-1
+      conf.vm.provision :ansible do |a|
+        a.limit = "all,localhost"
+        a.compatibility_mode = "2.0"
+        a.playbook = "inventory.yml"
+      end
+    end
+  end
+
+  # ===== Ansible provisioners
+
+  conf.vm.provision :ansible do |a|
+    a.compatibility_mode = "2.0"
+    a.playbook = "provision.yml"
+    a.become = true
+  end
+end

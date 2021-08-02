@@ -1,0 +1,15 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars_files:
+    - setup.yml
+
+  tasks:
+
+    - name: 'Generate inventory file for Ansible'
+      template:
+        src: templates/ansible_hosts.j2
+        dest: hosts
+        mode: '0644'

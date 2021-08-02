@@ -1,0 +1,162 @@
+---
+
+- hosts: admin
+
+  become: true
+
+  gather_facts: false
+
+  vars_files:
+    - setup.yml
+
+  tasks:
+
+    - name: 'Install package ceph-salt'
+      zypper:
+        name: ceph-salt
+        state: present
+        disable_recommends: false
+
+    - name: 'Restart service salt-master'
+      service:
+        name: salt-master
+        state: restarted
+
+    - name: 'Distribute changes to Salt minions'
+      shell: salt \* saltutil.sync_all || /bin/true
+      changed_when: false
+
+    - name: 'Include all Salt minions to the Ceph cluster configuration'
+      shell: ceph-salt config /ceph_cluster/minions add '*'
+      changed_when: false
+
+    - name: 'Have all Salt minions managed by cephadm'
+      shell: ceph-salt config /ceph_cluster/roles/cephadm add '*'
+      changed_when: false
+
+    - name: 'Specify the Admin node'
+      shell: ceph-salt config /ceph_cluster/roles/admin add node0.{{ public_net_domain }}
+      changed_when: false
+
+    - name: 'Specify the first Monitor/Manager node (bootstrap node)'
+      shell: ceph-salt config /ceph_cluster/roles/bootstrap set node1.{{ public_net_domain }}
+      changed_when: false
+
+    - name: 'Check whether an SSH key pair for account cephadm is set'
+      shell: |
+        set -o pipefail
+        ceph-salt config /ssh ls | grep 'no key pair set' || /bin/true
+      register: ceph_salt_config_ssh
+      changed_when: false
+
+    - name: 'Generate an SSH key pair for account cephadm'
+      shell: ceph-salt config /ssh generate
+      changed_when: false
+      when: ceph_salt_config_ssh.stdout | length > 0
+
+    - name: 'Disable time server handling completely (nodes use chronyd)'
+      shell: ceph-salt config /time_server disable
+      changed_when: false
+
+    - name: 'Set the Ceph Dashboard login credentials (admin, topsecret)'
+      shell: |
+        ceph-salt config /cephadm_bootstrap/dashboard/username set admin
+        ceph-salt config /cephadm_bootstrap/dashboard/password set topsecret
+      changed_when: false
+
+    - name: 'Specify the default SUSE container registry, for downloading images'
+      shell: ceph-salt config /cephadm_bootstrap/ceph_image_path set registry.suse.com/ses/7/ceph/ceph
+      changed_when: false
+
+    - name: 'Specify the cluster network, for OSDs'
+      shell: |
+        ceph-salt config /cephadm_bootstrap/ceph_conf add global
+        ceph-salt config /cephadm_bootstrap/ceph_conf/global set cluster_network {{ cluster_net_prefix }}.0/24
+      changed_when: false
+
+    - name: 'Check whether cluster configuration is valid'
+      shell: ceph-salt status
+      register: ceph_salt_status
+      changed_when: false
+
+    - name: 'Update all cluster nodes, using ceph-salt (this may take a while)'
+      shell: ceph-salt update --non-interactive
+      register: ceph_salt_update
+      changed_when: false
+
+    - name: "'ceph-salt update --non-interactive' output"
+      debug:
+        msg: '{{ ceph_salt_update.stdout }}'
+
+- hosts: ses_cluster
+
+  become: true
+
+  gather_facts: false
+
+  roles:
+    - reboot_SUSE
+
+- hosts: admin
+
+  become: true
+
+  gather_facts: false
+
+  vars_files:
+    - setup.yml
+
+  tasks:
+
+    - name: 'Bootstrap a minimal cluster, using ceph-salt (this may take a while)'
+      shell: ceph-salt apply --non-interactive
+      args:
+        creates: /etc/ceph/ceph.client.admin.keyring
+      register: ceph_salt_apply
+      changed_when: false
+
+    - name: "'ceph-salt apply --non-interactive' output"
+      debug:
+        msg: '{{ ceph_salt_apply.stdout }}'
+
+    - name: 'Make /etc/seph/ceph.client.admin.keyring readable by all'
+      file:
+        path: /etc/ceph/ceph.client.admin.keyring
+        mode: '0644'
+
+    - name: "Set global public_network, using 'ceph config'"
+      shell: ceph config set global public_network "$(ceph config get mon public_network)"
+      changed_when: false
+
+    - name: "Set global cluster_network, using 'ceph config'"
+      shell: ceph config set global cluster_network {{ cluster_net_prefix }}.0/24
+      changed_when: false
+
+    - name: 'Check whether we already have one Monitor and one Manager running'
+      shell: |
+        set -o pipefail
+        ceph orch ps | grep -E '(^mgr|^mon).*running' | wc -l
+      register: how_many
+      changed_when: false
+      until: how_many.stdout == '2'
+      retries: 90
+      delay: 20
+
+    - name: "Give some time to the cluster, so 'ceph health detail' complains only about OSD count"
+      shell: |
+        set -o pipefail
+        ceph health detail | grep -v 'OSD count' || /bin/true
+      register: ceph_health_detail
+      changed_when: false
+      until: ceph_health_detail.stdout | length == 0
+      retries: 180
+      delay: 10
+
+    - name: 'Get the cluster status'
+      shell: ceph status
+      register: ceph_status
+      changed_when: false
+
+    - name: "'ceph status' output"
+      debug:
+        msg: '{{ ceph_status.stdout }}'

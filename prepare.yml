@@ -1,0 +1,51 @@
+---
+
+- hosts: all
+
+  become: true
+
+  vars_files:
+    - repos_sle_ses.yml
+
+  roles:
+    - add_repos_SUSE
+    - refresh_update_SUSE
+    - reboot_SUSE
+
+  tasks:
+
+    - name: 'Install relevant SUSE products'
+      zypper:
+        name: [SLES,
+               sle-module-basesystem,
+               sle-module-server-applications,
+               ses]
+        type: product
+        state: present
+        update_cache: true
+
+    - name: 'Check whether service firewalld is present'
+      shell: |
+        set -o pipefail
+        systemctl list-unit-files --no-pager | grep firewalld || /bin/true
+      register: service_list
+      changed_when: false
+
+    - name: 'Stop and disable service firewalld'
+      service:
+        name: firewalld
+        state: stopped
+        enabled: false
+      when: '"firewalld.service" in service_list.stdout'
+
+    - name: 'Install package chrony'
+      zypper:
+        name: chrony
+        state: present
+        update_cache: true
+
+    - name: 'Start and enable service chronyd'
+      service:
+        name: chronyd
+        state: started
+        enabled: true

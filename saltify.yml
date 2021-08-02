@@ -1,0 +1,90 @@
+---
+
+- hosts: admin
+
+  become: true
+
+  gather_facts: false
+
+  tasks:
+
+    - name: 'Install package salt-master'
+      zypper:
+        name: salt-master
+        state: present
+        disable_recommends: false
+
+    - name: 'Start and enable service salt-master'
+      service:
+        name: salt-master
+        state: started
+        enabled: true
+
+- hosts: ses_cluster
+
+  become: true
+
+  gather_facts: false
+
+  vars_files:
+    - setup.yml
+
+  tasks:
+
+    - name: 'Install package salt-minion'
+      zypper:
+        name: salt-minion
+        state: present
+        disable_recommends: false
+
+    - name: 'In /etc/salt/minion, set the warning log level to info'
+      lineinfile:
+        path: /etc/salt/minion
+        line: 'log_level_logfile: info'
+        state: present
+
+    - name: 'Point minion to the Salt master'
+      lineinfile:
+        path: /etc/salt/minion.d/master.conf
+        line: 'master: node0.{{ public_net_domain }}'
+        state: present
+        create: true
+
+    - name: 'Restart and enable service salt-minion'
+      service:
+        name: salt-minion
+        state: restarted
+        enabled: true
+
+- hosts: admin
+
+  become: true
+
+  gather_facts: false
+
+  tasks:
+
+    - name: 'Give minions some time to communicate with the Salt master'
+      pause:
+        seconds: 5
+
+    - name: 'Check whether there are unaccepted minion keys'
+      shell: |
+        set -o pipefail
+        salt-key --list=unacceped | grep -v 'Unaccepted Keys:' || /bin/true
+      register: unaccepted_keys
+      changed_when: false
+
+    - name: 'Accept all unaccepted minion keys'
+      shell: salt-key --accept-all --yes
+      changed_when: false
+      when: unaccepted_keys.stdout | length > 0
+
+    - name: 'Get all accepted minion keys'
+      shell: salt-key --list=acceped
+      register: salt_key
+      changed_when: false
+
+    - name: "'salt-key --list=acceped' output"
+      debug:
+        msg: '{{ salt_key.stdout }}'

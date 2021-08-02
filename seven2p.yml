@@ -1,0 +1,109 @@
+---
+
+- hosts: all
+
+  become: true
+
+  gather_facts: false
+
+  vars_files:
+    - repos_sle.yml
+
+  tasks:
+
+    - name: 'Remove all existing repositories (but those of SES 7)'
+      include_role:
+        name: remove_repos_SUSE
+
+- hosts: all
+
+  become: true
+
+  gather_facts: false
+
+  vars_files:
+    - repos_sle_new.yml
+
+  tasks:
+
+    - name: 'Add repositories for SLE 15 SP3'
+      include_role:
+        name: add_repos_SUSE
+
+- hosts: all
+
+  become: true
+
+  gather_facts: false
+
+  tasks:
+
+    - name: 'Perform distribution upgrade (this may take a while)'
+      shell: zypper --non-interactive dist-upgrade --download-in-advance --allow-vendor-change warn=no
+      changed_when: false
+
+    - name: 'Get name and version of the OS we are running on'
+      shell: |
+        . /etc/os-release
+        echo $PRETTY_NAME
+      register: pretty_name
+      changed_when: false
+
+    - name: "'. /etc/os-release ; echo $PRETTY_NAME' output"
+      debug:
+        msg: 'Running on {{ pretty_name.stdout }}'
+
+- hosts: all
+
+  become: true
+
+  gather_facts: false
+
+  tasks:
+
+    - name: 'Perform system reboot (if needed)'
+      include_role:
+        name: reboot_SUSE
+
+- hosts: all
+
+  become: true
+
+  gather_facts: false
+
+  vars_files:
+    - repos_ses_new.yml
+
+  tasks:
+
+    - name: 'Add repositories for SES7p'
+      include_role:
+        name: add_repos_SUSE
+
+- hosts: admin
+
+  become: true
+
+  gather_facts: false
+
+  tasks:
+
+    - name: 'Take a breather'
+      pause:
+        seconds: 15
+
+    - name: 'Specify the openSUSE container registry, for downloading Pacific images'
+      shell: ceph-salt config /cephadm_bootstrap/ceph_image_path set registry.opensuse.org/opensuse/ceph/ceph
+      changed_when: false
+
+    - name: 'Initiate the upgrade to Pacific'
+      shell: ceph orch upgrade start --image registry.opensuse.org/opensuse/ceph/ceph:latest
+      changed_when: false
+
+    - name: 'Tip'
+      debug:
+        msg: "Type 'ceph -W cephadm' to watch how the upgrade progresses"
+
+    - name: 'Tip'
+      debug:
+        msg: "Type 'ceph versions' after the upgrade completes"

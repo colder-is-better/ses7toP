@@ -1,0 +1,11 @@
+---
+
+- name: 'Add repositories for OS / Modules / Products'
+  zypper_repository:
+    name: '{{ item.name }}'
+    repo: '{{ item.url }}'
+    state: present
+    auto_import_keys: true
+    overwrite_multiple: true
+    runrefresh: true
+  with_items: '{{ repos }}'

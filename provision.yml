@@ -1,0 +1,19 @@
+---
+- hosts: all
+
+  become: true
+
+  vars_files:
+    - setup.yml
+
+  gather_facts: false
+
+  tasks:
+
+    - name: 'Upload specially crafted hosts file to remote /etc'
+      template:
+        src: templates/etc_hosts.j2
+        dest: /etc/hosts
+        owner: root
+        group: root
+        mode: 0644

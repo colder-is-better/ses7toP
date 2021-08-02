@@ -1,0 +1,11 @@
+127.0.0.1 localhost.localdomain localhost
+
+{% for k in range(0,node_count) %}
+{{ public_net_prefix }}.{{ first_node_addr+k }} node{{ k }}.{{ public_net_domain }} node{{ k }}
+{{ cluster_net_prefix }}.{{ first_node_addr+k }} node{{ k }}.{{ cluster_net_domain }} node{{ k }}-int
+
+{% endfor %}
+# The following lines are desirable for IPv6 capable hosts
+::1 localhost ip6-localhost ip6-loopback
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters

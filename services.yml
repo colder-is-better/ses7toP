@@ -1,0 +1,7 @@
+# Maximum numbers of services to deploy on day2
+
+max_mons: '3' # Monitors
+max_mgrs: '3' # Managers
+max_rgws: '2' # RADOS gateways
+max_mdss: '2' # Metadata servers
+max_nfss: '0' # NFS Ganesha servers

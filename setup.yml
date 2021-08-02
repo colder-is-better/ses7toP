@@ -1,0 +1,47 @@
+# Vagrant base box to use
+
+the_box: "sles15sp2"
+
+# Vagrant boxes URLs:
+#
+# http://download.nue.suse.com/ibs/Virtualization:\
+# /Vagrant:/SLE-15-SP2/images/SLES15-SP2-Vagrant.x86_64-libvirt.box
+#
+# http://download.nue.suse.com/ibs/Virtualization:\
+# /Vagrant:/SLE-15-SP2/images/SLES15-SP2-Vagrant.x86_64-virtualbox.box
+
+# Number of nodes
+
+node_count: 4
+
+# Amount of RAM (in megabytes) per node
+
+ram_size: 2048
+
+# Number of CPU cores per node
+
+core_count: 2
+
+# Number of extra disks (OSDs) per node
+
+osd_count: 3
+
+# Capacity (in megabytes) of any OSD
+
+osd_cap: 32768
+
+# The /24 public and private networks for the cluster
+# nodes. Example: If one network is 10.11.12.0/24,
+#then *_net_prefix should be "10.11.12"
+
+public_net_prefix: "192.168.25"
+cluster_net_prefix: "10.20.30"
+
+# Host address of the first node in the cluster
+
+first_node_addr: 200
+
+# Domains of the public & private networks
+
+public_net_domain: "ses.local"
+cluster_net_domain: "ses.int"

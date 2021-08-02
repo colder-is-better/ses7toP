@@ -1,0 +1,83 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+ENV['VAGRANT_DEFAULT_PROVIDER'] = "virtualbox"
+
+require "yaml"
+
+params = YAML.load_file "setup.yml"
+
+the_box = params["the_box"]
+
+node_count = params["node_count"]
+
+ram_size = params["ram_size"]
+core_count = params["core_count"]
+
+osd_count = params["osd_count"]
+osd_cap = params["osd_cap"]
+
+public_net_domain = params["public_net_domain"]
+public_net_prefix = params["public_net_prefix"]
+cluster_net_prefix = params["cluster_net_prefix"]
+
+first_node_addr = params["first_node_addr"]
+
+Vagrant.configure(2) do |config|
+
+  # ===== General Vagrant VM configuration
+
+  config.vm.box = "#{the_box}"
+  config.vm.box_check_update = false
+  config.vm.synced_folder "./", "/vagrant", disabled: true
+  config.vm.provider :virtualbox do |t|
+    t.cpus = core_count
+    t.memory = ram_size
+    t.default_nic_type = "virtio"
+    t.customize ["modifyvm", :id, "--vram", "2"]
+    t.linked_clone = true
+  end
+  config.ssh.insert_key = false
+
+  # ===== Admin and Cluster nodes (with one or more OSD disks each)
+
+  (0..node_count-1).each do |k|
+    config.vm.define :"node#{k}" do |n|
+      n.vm.hostname = "node#{k}.#{public_net_domain}"
+      n.vm.network :private_network,
+        :ip => "#{public_net_prefix}.#{first_node_addr+k}"
+      n.vm.network :private_network,
+        :ip => "#{cluster_net_prefix}.#{first_node_addr+k}"
+
+      if k > 0
+        n.vm.provider "virtualbox" do |t|
+          (0..osd_count-1).each do |m|
+            osd_file = "node#{k}-osd#{m}.vdi"
+            unless File.file?(osd_file)
+              t.customize [ "createhd", "--filename", osd_file, "--size", osd_cap ]
+            end
+            t.customize [ "storageattach", :id, "--storagectl", "SATA Controller",
+                          "--port", "#{m+1}", "--device", 0, "--type", "hdd",
+                          "--medium", osd_file ]
+          end
+        end
+      end
+    end
+
+    if k == node_count-1
+      config.vm.provision :ansible do |a|
+        a.limit = "all,localhost"
+        a.compatibility_mode = "2.0"
+        a.playbook = "inventory.yml"
+      end
+    end
+  end
+
+  # ===== Ansible provisioner
+
+  config.vm.provision :ansible do |a|
+    a.compatibility_mode = "2.0"
+    a.playbook = "provision.yml"
+    a.become = true
+  end
+end

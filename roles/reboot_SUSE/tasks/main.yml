@@ -1,0 +1,19 @@
+---
+
+- name: 'Install package lsof'
+  zypper:
+    name: lsof
+    state: present
+
+- name: 'Check whether reboot is required'
+  become: true
+  shell: zypper ps
+  args:
+    warn: false
+  register: zypper_ps
+  failed_when: zypper_ps.rc not in [0, 102]
+  changed_when: false
+
+- name: 'Initiate system reboot'
+  reboot:
+  when: zypper_ps.rc == 102
