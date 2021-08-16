@@ -81,10 +81,10 @@
       when: unaccepted_keys.stdout | length > 0
 
     - name: 'Get all accepted minion keys'
-      shell: salt-key --list=acceped
+      shell: salt-key --list=accepted
       register: salt_key
       changed_when: false
 
-    - name: "'salt-key --list=acceped' output"
+    - name: "'salt-key --list=accepted' output"
       debug:
         msg: '{{ salt_key.stdout }}'
