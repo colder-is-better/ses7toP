@@ -4,11 +4,39 @@
 
   become: true
 
+  gather_facts: false
+
   vars_files:
-    - repos_sle_ses.yml
+    - repos_sle.yml
+
+  tasks:
+
+    - name: 'Add repositories for SLE 15 SP2'
+      include_role:
+        name: add_repos_SUSE
+
+- hosts: all
+
+  become: true
+
+  gather_facts: false
+
+  vars_files:
+    - repos_ses.yml
+
+  tasks:
+
+    - name: 'Add repositories for SES 7'
+      include_role:
+        name: add_repos_SUSE
+
+- hosts: all
+
+  become: true
+
+  gather_facts: false
 
   roles:
-    - add_repos_SUSE
     - refresh_update_SUSE
     - reboot_SUSE
 
