@@ -12,11 +12,11 @@ the_box: "sles15sp2"
 
 # Number of nodes
 
-node_count: 4
+node_count: 5
 
 # Amount of RAM (in megabytes) per node
 
-ram_size: 2048
+ram_size: 4096
 
 # Number of CPU cores per node
 
