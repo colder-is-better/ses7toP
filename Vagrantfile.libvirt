@@ -48,12 +48,12 @@ Vagrant.configure(2) do |conf|
         :ip => "#{cluster_net_prefix}.#{first_node_addr+m}"
       if m > 0
         (0..osd_count-1).each do |i|
-	  n.vm.provider :libvirt do |t|
-	    t.storage :file,
-	      :path => "node#{m}-osd#{i}.qcow2",
-	      :size => "#{osd_cap}M",
-	      :type => "qcow2"
-	  end
+          n.vm.provider :libvirt do |t|
+            t.storage :file,
+              :path => "node#{m}-osd#{i}.qcow2",
+              :size => "#{osd_cap}M",
+              :type => "qcow2"
+          end
         end
       end
     end
