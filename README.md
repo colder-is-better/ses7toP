@@ -100,7 +100,7 @@ Make sure you have a symlink named `Vagrantfile` pointing to the actual Vagrant 
 
 Then, just `vagrant up` your environment.
 
-After a while you should have all fine nodes running, each having an automatically-generated `/etc/hosts` file containing all necessary information so each node is reachable from any other node by IP/hostname/FQDN. Also, in the current directory of your physical host you will have a `hosts` file, for Ansible to make use of.
+After a while you should have all fine nodes running, each with an automatically generated `/etc/hosts` file containing all necessary information so every single node is reachable from any other node by IP/hostname/FQDN. (This is thanks to playbook `provision.yml`, which is called right after each VM gets ready.) Also, in the current directory of your physical host you will have a `hosts` file, for Ansible to make use of. (This is thanks to playbook `inventory.yml`, which is called once after the last VM gets ready.)
 
 ![vagrant-up-complete](./screenshots/vagrant-up-complete.png)*Vagrant just completed bringing up all cluster nodes*
 
