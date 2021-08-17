@@ -61,6 +61,6 @@
 
   tasks:
 
-    - name: 'Perform system reboot (if needed)'
+    - name: 'Reboot system'
       include_role:
         name: reboot_SUSE
