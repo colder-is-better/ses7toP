@@ -69,7 +69,7 @@ For our testing we use specific Vagrant boxes with SLE 15 SP2, which reside in I
 #### Box for libvirt:
 
 ```
-vagrant box add --provider libvirt --name sles12sp2 \
+vagrant box add --provider libvirt --name sles15sp2 \
   http://download.nue.suse.com/ibs/Virtualization:/Vagrant:/SLE-15-SP2/images/\
   SLES15-SP2-Vagrant.x86_64-libvirt.box
 ```
@@ -77,7 +77,7 @@ vagrant box add --provider libvirt --name sles12sp2 \
 #### Box for VirtualBox:
 
 ```
-vagrant box add --provider virtualbox --name sles12sp2 \
+vagrant box add --provider virtualbox --name sles15sp2 \
   http://download.nue.suse.com/ibs/Virtualization:/Vagrant:/SLE-15-SP2/images/\
   SLES15-SP2-Vagrant.x86_64-virtualbox.box
 ```
