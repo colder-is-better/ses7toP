@@ -165,7 +165,7 @@ ansible-playbook -i hosts upgrade2sp3.yml
 
 The upgrade process to SES 7 Pacific is documented in playbook `seven2p.yml`:
 
-* remove SES 7 repositories from all cluster nodes (those repositories are defined in `repos_ses_new.yml`
+* remove SES 7 repositories from all cluster nodes (those repositories are defined in `repos_ses.yml`
 * add to all cluster nodes new repositories for SES 7 Pacific (defined in `repos_ses_new.yml`)
 * perform package updates on each and every single one of the cluster nodes
 * reboot nodes, if necessary
