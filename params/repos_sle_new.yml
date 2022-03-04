@@ -1,0 +1,11 @@
+repos:
+  - { name: 'product', url: 'http://dist.suse.de/ibs/SUSE/Products/SLE-Product-SLES/15-SP3/x86_64/product' }
+  - { name: 'product_up', url: 'http://dist.suse.de/ibs/SUSE/Updates/SLE-Product-SLES/15-SP3/x86_64/update' }
+
+  - { name: 'base_sys', url: 'http://download.nue.suse.com/ibs/SUSE/Products/SLE-Module-Basesystem/15-SP3/x86_64/product' }
+  - { name: 'base_sys_up', url: 'http://download.nue.suse.com/ibs/SUSE/Updates/SLE-Module-Basesystem/15-SP3/x86_64/update' }
+
+  - { name: 'srv_apps', url: 'http://download.nue.suse.com/ibs/SUSE/Products/SLE-Module-Server-Applications/15-SP3/x86_64/product' }
+  - { name: 'srv_apps_up', url: 'http://download.nue.suse.com/ibs/SUSE/Updates/SLE-Module-Server-Applications/15-SP3/x86_64/update' }
+
+  - { name: 'suse_int_ca', url: 'http://download.suse.de/ibs/SUSE:/CA/SLE_15_SP3' }

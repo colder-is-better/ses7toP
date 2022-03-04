@@ -7,7 +7,8 @@
   gather_facts: false
 
   vars_files:
-    - setup.yml
+    - params/registries.yml
+    - params/setup.yml
 
   tasks:
 
@@ -54,7 +55,7 @@
       changed_when: false
       when: ceph_salt_config_ssh.stdout | length > 0
 
-    - name: 'Disable time server handling completely (nodes use chronyd)'
+    - name: 'Disable time server handling (nodes use chronyd)'
       shell: ceph-salt config /time_server disable
       changed_when: false
 
@@ -64,8 +65,8 @@
         ceph-salt config /cephadm_bootstrap/dashboard/password set topsecret
       changed_when: false
 
-    - name: 'Specify the default SUSE container registry, for downloading images'
-      shell: ceph-salt config /cephadm_bootstrap/ceph_image_path set registry.suse.com/ses/7/ceph/ceph
+    - name: 'Specify registry for downloading images'
+      shell: ceph-salt config /cephadm_bootstrap/ceph_image_path set '{{ cr_ses7 }}'
       changed_when: false
 
     - name: 'Specify the cluster network, for OSDs'
@@ -78,15 +79,6 @@
       shell: ceph-salt status
       register: ceph_salt_status
       changed_when: false
-
-    - name: 'Update all cluster nodes, using ceph-salt (this may take a while)'
-      shell: ceph-salt update --non-interactive
-      register: ceph_salt_update
-      changed_when: false
-
-    - name: "'ceph-salt update --non-interactive' output"
-      debug:
-        msg: '{{ ceph_salt_update.stdout }}'
 
 - hosts: ses_cluster
 
@@ -104,7 +96,7 @@
   gather_facts: false
 
   vars_files:
-    - setup.yml
+    - params/setup.yml
 
   tasks:
 

@@ -7,7 +7,7 @@
   gather_facts: false
 
   vars_files:
-    - services.yml
+    - params/services.yml
 
   tasks:
 

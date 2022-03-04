@@ -1,6 +1,6 @@
 # Vagrant base box to use
 
-the_box: "sles15sp2"
+the_box: "sles-15-sp2"
 
 # Vagrant boxes URLs:
 #
@@ -12,7 +12,7 @@ the_box: "sles15sp2"
 
 # Number of nodes
 
-node_count: 5
+node_count: 4
 
 # Amount of RAM (in megabytes) per node
 
@@ -20,7 +20,7 @@ ram_size: 4096
 
 # Number of CPU cores per node
 
-core_count: 2
+core_count: 4
 
 # Number of extra disks (OSDs) per node
 
@@ -28,13 +28,13 @@ osd_count: 3
 
 # Capacity (in megabytes) of any OSD
 
-osd_cap: 32768
+osd_cap: 16384
 
 # The /24 public and private networks for the cluster
 # nodes. Example: If one network is 10.11.12.0/24,
 #then *_net_prefix should be "10.11.12"
 
-public_net_prefix: "192.168.25"
+public_net_prefix: "192.168.178"
 cluster_net_prefix: "10.20.30"
 
 # Host address of the first node in the cluster
@@ -43,5 +43,5 @@ first_node_addr: 200
 
 # Domains of the public & private networks
 
-public_net_domain: "ses.local"
-cluster_net_domain: "ses.int"
+public_net_domain: "ses.eh"
+cluster_net_domain: "ses.net"

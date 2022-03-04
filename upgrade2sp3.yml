@@ -7,7 +7,7 @@
   gather_facts: false
 
   vars_files:
-    - repos_sle.yml
+    - params/repos_sle.yml
 
   tasks:
 
@@ -22,7 +22,7 @@
   gather_facts: false
 
   vars_files:
-    - repos_sle_new.yml
+    - params/repos_sle_new.yml
 
   tasks:
 

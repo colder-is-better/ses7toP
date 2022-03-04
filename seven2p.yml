@@ -7,7 +7,7 @@
   gather_facts: false
 
   vars_files:
-    - repos_ses.yml
+    - params/repos_ses.yml
 
   tasks:
 
@@ -22,7 +22,7 @@
   gather_facts: false
 
   vars_files:
-    - repos_ses_new.yml
+    - params/repos_ses_new.yml
 
   tasks:
 
@@ -46,18 +46,21 @@
 
   gather_facts: false
 
+  vars_files:
+    - params/registries.yml
+
   tasks:
 
     - name: 'Take a breather'
       pause:
         seconds: 15
 
-    - name: 'Specify the openSUSE container registry, for downloading Pacific images'
-      shell: ceph-salt config /cephadm_bootstrap/ceph_image_path set registry.opensuse.org/filesystems/ceph/pacific/images/ceph/ceph
+    - name: 'Specify registry for downloading Pacific images'
+      shell: ceph-salt config /cephadm_bootstrap/ceph_image_path set '{{ cr_ses7p }}'
       changed_when: false
 
     - name: 'Initiate the container upgrade process'
-      shell: ceph orch upgrade start --image registry.opensuse.org/filesystems/ceph/pacific/images/ceph/ceph:latest
+      shell: ceph orch upgrade start --image '{{ cr_ses7p }}':latest
       changed_when: false
 
     - name: 'Tip'

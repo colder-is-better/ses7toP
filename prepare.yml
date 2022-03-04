@@ -7,7 +7,7 @@
   gather_facts: false
 
   vars_files:
-    - repos_sle.yml
+    - params/repos_sle.yml
 
   tasks:
 
@@ -22,7 +22,7 @@
   gather_facts: false
 
   vars_files:
-    - repos_ses.yml
+    - params/repos_ses.yml
 
   tasks:
 
@@ -66,9 +66,9 @@
         enabled: false
       when: '"firewalld.service" in service_list.stdout'
 
-    - name: 'Install package chrony'
+    - name: 'Install packages ca-certificates-suse, chrony'
       zypper:
-        name: chrony
+        name: [ca-certificates-suse, chrony]
         state: present
         update_cache: true
 

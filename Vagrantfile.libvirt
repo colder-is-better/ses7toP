@@ -5,7 +5,7 @@ ENV['VAGRANT_DEFAULT_PROVIDER'] = 'libvirt'
 
 require "yaml"
 
-params = YAML.load_file "setup.yml"
+params = YAML.load_file "params/setup.yml"
 
 the_box = params["the_box"]
 

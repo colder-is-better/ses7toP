@@ -1,0 +1,3 @@
+repos:
+  - { name: 'ses7', url: 'http://download.nue.suse.com/ibs/SUSE/Products/Storage/7/x86_64/product' }
+  - { name: 'ses7_up', url: 'http://download.nue.suse.com/ibs/SUSE/Updates/Storage/7/x86_64/update' }

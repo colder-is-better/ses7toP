@@ -88,7 +88,7 @@ vagrant box add --provider virtualbox --name sles15sp2 \
 
 On the host you are going to be working on, clone the ses7toP repository and change into the new directory.
 
-To deploy a set of VMs which, in a bit, are going to be members of a virtual SES 7 cluster, first take a look into the `setup.yml` file. All parameters are documented into said file. You may want to make some changes here and there, for example regarding the total number of nodes, the RAM allocated to each node, or the number of OSD disks each but the first node has.
+To deploy a set of VMs which, in a bit, are going to be members of a virtual SES 7 cluster, first take a look into the `params/setup.yml` file. All parameters are documented into said file. You may want to make some changes here and there, for example regarding the total number of nodes, the RAM allocated to each node, or the number of OSD disks each but the first node has.
 
 The defaults lead to a five-node cluster. The first node (`node0`) is the only one with no OSD disks and always doubles as the admin node. The second node (`node1`) always doubles as the bootstrap node, while all the rest host various Ceph services. More on those services in a bit.
 
@@ -106,7 +106,7 @@ After a while you should have all fine nodes running, each with an automatically
 
 ## Get nodes ready for SES
 
-The Vagrant boxes we use come without repositories. So at this early stage we have to add repositories for the OS, the module(s), and the product(s), to each and every single one of our running nodes. (All those repositories are defined in `repos_sle.yml` and in `repos_ses.yml`.) For this and some other tasks we have the playbook named `prepare.yml`, and to execute it we type:
+The Vagrant boxes we use come without repositories. So at this early stage we have to add repositories for the OS, the module(s), and the product(s), to each and every single one of our running nodes. (All those repositories are defined in `params/repos_sle.yml` and in `params/repos_ses.yml`.) For this and some other tasks we have the playbook named `prepare.yml`, and to execute it we type:
 
 ```
 ansible-playbook -i hosts prepare.yml
@@ -114,13 +114,13 @@ ansible-playbook -i hosts prepare.yml
 
 ![prep-complete](./screenshots/prep-complete.png)*All nodes have been properly prepared for SES*
 
-In SES, for the initial cluster preparation we use Salt and `ceph-salt` (see paragraph 5.2, [Deploying Salt](https://documentation.suse.com/ses/7/html/ses-all/deploy-cephadm.html#deploy-salt), in the official documentation). For properly installing Salt master and minions on respective nodes, point the minions to to the master and, finally, have the master accept the minion keys, we have a playbook named `saltify.yml`:
+In SES, for the initial cluster preparation we use Salt and `ceph-salt` (see paragraph 5.2, [Deploying Salt](https://documentation.suse.com/ses/7/html/ses-all/deploy-cephadm.html#deploy-salt), in the official documentation). For properly installing Salt master and minions on respective nodes, point the minions to the master and, finally, have the master accept the minion keys, we have a playbook named `saltify.yml`:
 
 ```
 ansible-playbook -i hosts saltify.yml
 ```
 
-![saltification-complete](./screenshots/saltification-complete.png)*All Salt minion keys have been accepted by the Salt master, running on the admin node*
+![saltification-complete](./screenshots/saltification-complete.png)*All Salt minion keys have been accepted by the Salt master, which is running on the admin node*
 
 We are now ready to bootstrap the cluster.
 
@@ -136,7 +136,7 @@ ansible-playbook -i hosts day1.yml
 
 ## Deploy services  
 
-When the cluster has finished bootstrapping we are ready for "day 2" operations. First off, we have to deploy OSDs. In our scenario, each of the nodes but the first has a number of OSD disks and all those disks are automatically consumed. Besides the OSD services we deploy additional monitors and managers, Metadata servers, RADOS gateways, etc. The type and number of individual services we can currently deploy is defined in `services.yml`, and day 2 operations start like this:
+When the cluster has finished bootstrapping we are ready for "day 2" operations. First off, we have to deploy OSDs. In our scenario, each of the nodes but the first has a number of OSD disks and all those disks are automatically consumed. Besides the OSD services we deploy additional monitors and managers, Metadata servers, RADOS gateways, etc. The type and number of individual services we can currently deploy is defined in `params/services.yml`, and day 2 operations start like this:
 
 ```
 ansible-playbook -i hosts day2.yml
@@ -148,8 +148,8 @@ ansible-playbook -i hosts day2.yml
 
 To go from SLE 15 SP2 to SLE 15 SP3 we...
 
-* remove repositories from all cluster nodes, keeping only those for SES 7 (the repositories we remove are defined in `repos_sle.yml`)
-* add to all cluster nodes new repositories for SLE 15 SP3 (those are defined in `repos_sle_new.yml`)
+* remove repositories from all cluster nodes, keeping only those for SES 7 (the repositories we remove are defined in `params/repos_sle.yml`)
+* add to all cluster nodes new repositories for SLE 15 SP3 (those are defined in `params/repos_sle_new.yml`)
 * perform distribution upgrade to all nodes
 * reboot nodes, if necessary
 
@@ -165,11 +165,11 @@ ansible-playbook -i hosts upgrade2sp3.yml
 
 The upgrade process to SES 7 Pacific is documented in playbook `seven2p.yml`:
 
-* remove SES 7 repositories from all cluster nodes (those repositories are defined in `repos_ses.yml`
-* add to all cluster nodes new repositories for SES 7 Pacific (defined in `repos_ses_new.yml`)
+* remove SES 7 repositories from all cluster nodes (those repositories are defined in `params/repos_ses.yml`
+* add to all cluster nodes new repositories for SES 7 Pacific (defined in `params/repos_ses_new.yml`)
 * perform package updates on each and every single one of the cluster nodes
 * reboot nodes, if necessary
-* from the admin node, use ceph-salt to specify the openSUSE container registry for downloading Pacific images
+* from the admin node, use ceph-salt to specify the openSUSE container registry for downloading Pacific images (said registry is defined in `params/`)
 * from the admin node, initiate the upgrade process for all SES 7 containers to SES 7 Pacific containers
 
 To start the transition to Pacific, just type:
@@ -178,6 +178,6 @@ To start the transition to Pacific, just type:
 ansible-playbook -i hosts seven2p.yml
 ```
 
-![upgrade-process-to-ses7p-initiated](./screenshots/upgrade-process-to-ses7p-initiated.png)*The playbook for upgrading to SES 7 Pacific finishes relatively fast but the whole process takes much longer because, if anything, the new containers have to be downloaded and replace the respective older ones*
+![upgrade-process-to-ses7p-initiated](./screenshots/upgrade-process-to-ses7p-initiated.png)*The playbook for upgrading to SES 7 Pacific finishes relatively fast but the whole process takes much longer because, if anything, the new containers have to be downloaded and replace the respective old ones*
 
 ![upgraded-to-sle15sp3](./screenshots/checking-versions.png)*The upgrade process to SES 7 Pacific has finished and now we're checking versions*

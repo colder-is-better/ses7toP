@@ -4,7 +4,7 @@
   become: true
 
   vars_files:
-    - setup.yml
+    - params/setup.yml
 
   gather_facts: false
 

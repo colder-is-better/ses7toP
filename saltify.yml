@@ -27,7 +27,7 @@
   gather_facts: false
 
   vars_files:
-    - setup.yml
+    - params/setup.yml
 
   tasks:
 

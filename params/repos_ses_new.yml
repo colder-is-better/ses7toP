@@ -1,0 +1,2 @@
+repos:
+  - { name: 'ses7p_devel', url: 'http://download.suse.de/ibs/Devel:/Storage:/7.0:/Pacific/images/repo/SUSE-Enterprise-Storage-7-POOL-Internal-x86_64-Media' }
